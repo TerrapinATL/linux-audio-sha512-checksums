@@ -2,6 +2,9 @@
 
 **Version: v14** — Current version; supersedes v13.
 
+Change log and version history are maintained separately:
+[linux-audio-flac-sha512-checksum-changelog.md](linux-audio-flac-sha512-checksum-changelog.md)
+
 ---
 
 01. Introduction
@@ -1004,7 +1007,7 @@ Additionally, Step 6 writes two specialized logs:
 
 Once you have reviewed the final logs, verified that your master library is fully processed, and completed your rsync transfer to the external backup drive, you can safely delete the entire $HOME/.logs/linux-audio-flac-sha512-checksum directory. It is completely independent of the audio files and is no longer needed once the project is finished.
 
-\-------------------------------------------------------------------
+\---------------------------------------------------------------------------------------
 
 -- Disclaimer
 
