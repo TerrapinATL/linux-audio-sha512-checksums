@@ -2,7 +2,7 @@
 
 A collection of Bash scripts for generating, verifying, and auditing cryptographic hashes across music libraries on Linux.
 
-**Guide version: v14** — Current version; supersedes v13.
+**Guide version: v15** — Current version; supersedes v14. Step 1 terminal output (header/footer) aligned to the moode-cleanup guide format; `.mpdignore` files excluded from the stray audit; stray policy made explicit (list only — the user decides what happens to strays); `Ignore.sha512sums.txt` accepted as a third generic manifest name, 2026-09-16/17 (see the change log).
 
 * Full guide: [linux-audio-flac-sha512-checksum.md](linux-audio-flac-sha512-checksum.md)
 * Change log: [linux-audio-flac-sha512-checksum-changelog.md](linux-audio-flac-sha512-checksum-changelog.md)
