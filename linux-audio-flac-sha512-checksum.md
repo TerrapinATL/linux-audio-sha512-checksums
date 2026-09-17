@@ -1,6 +1,12 @@
 ### linux-audio-flac-sha512-checksum
 
-**Version: v14** — Current version; supersedes v13.
+**Version: v15** — Current version; supersedes v14. Step 1 terminal
+output (header/footer) aligned to the moode-cleanup guide format,
+`.mpdignore` files excluded from the stray-file audit, the stray
+policy made explicit (list only — user decides what happens to strays),
+and `Ignore.sha512sums.txt` accepted as a third generic manifest name
+(written by 15d of the moOde cleanup guide inside each Ignore folder).
+(Changes applied 2026-09-16 / 2026-09-17.)
 
 Change log and version history are maintained separately:
 [linux-audio-flac-sha512-checksum-changelog.md](linux-audio-flac-sha512-checksum-changelog.md)
@@ -155,6 +161,8 @@ Before generating checksum manifests, it is critical to ensure that no unexpecte
 
 This step writes `step1-run.log` (full transcript), `step1-oks.log` (clean audit result), and `step1-fails.log` (stray/unrecognized files) to `$HOME/.logs/linux-audio-flac-sha512-checksum`.
 
+**Stray policy:** strays are listed only — the audit never moves or deletes anything. Deciding what happens to each stray (rename, relocate, or delete) is always a user decision.
+
 --- Bash Script Step 1 Start ---
 ```bash
 
@@ -163,6 +171,11 @@ This step writes `step1-run.log` (full transcript), `step1-oks.log` (clean audit
 #Step 1 - Stray File Audit and Identification
 
 LOG_ROOT="$HOME/.logs/linux-audio-flac-sha512-checksum"
+
+# AUTOPURGE: remove all logs from any previous run of this workflow.
+# This runs at the START of the workflow, so the previous run's logs remain
+# on disk for review until the next run replaces them.
+rm -rf "$LOG_ROOT"
 mkdir -p "$LOG_ROOT"
 
 RUN_LOG="$LOG_ROOT/step1-run.log"
@@ -200,7 +213,10 @@ fi
 # ---------------------------------------------
 
 {
-    echo "Stray file audit started..."
+    echo "========== Step 1: Stray File Audit and Identification =========="
+    echo "Root: $PWD"
+    echo "Started: $(date)"
+    echo
 
     find "$PWD" -type f \
         ! -iname "*.flac" \
@@ -215,20 +231,27 @@ fi
         ! -iname "*.png" \
         ! -name "ARTIST.sha512sums.txt" \
         ! -name "ALBUM.sha512sums.txt" \
+        ! -name "Ignore.sha512sums.txt" \
+        ! -iname ".mpdignore" \
         -print | tee "$FAILS_LOG"
 
     count=$(wc -l < "$FAILS_LOG" 2>/dev/null || echo 0)
 
     if [ "$count" -gt 0 ]; then
         echo "WARNING: Found $count stray/unrecognized file(s). Review '$FAILS_LOG' before generating checksums."
+        echo "Decision on each stray is left to the user - nothing is moved or deleted automatically."
         printf "%s\n" "$(basename "$PWD") : $count stray file(s) found" > "$OKS_LOG"
     else
         echo "OK: No unauthorized stray files detected. Library is clean for checksum generation."
         printf "%s\n" "$(basename "$PWD") : clean" > "$OKS_LOG"
     fi
 
-    echo "Stray file audit completed."
-    echo "SUMMARY: $count stray file(s) found in total."
+    echo
+    echo "----------------------------------------"
+    echo "Library scanned  Stray files: $count"
+    echo "----------------------------------------"
+    echo "Step 1 – Stray File Audit and Identification"
+    echo "----------------------------------------"
 } | tee "$RUN_LOG"
 
 ```
@@ -900,12 +923,13 @@ echo "Auditing library for rogue files and missing manifests..." | tee "$RUN_LOG
 find "$PWD" -type f -iname "*.sha512*" \
     ! -name "ARTIST.sha512sums.txt" \
     ! -name "ALBUM.sha512sums.txt" \
+    ! -name "Ignore.sha512sums.txt" \
     -print | tee -a "$ROGUE_LOG"
 
 mapfile -d '' dirs < <(find "$PWD" -type d -print0 | LC_ALL=C sort -z)
 
 for d in "${dirs[@]}"; do
-    if [[ ! -f "$d/ARTIST.sha512sums.txt" && ! -f "$d/ALBUM.sha512sums.txt" ]]; then
+    if [[ ! -f "$d/ARTIST.sha512sums.txt" && ! -f "$d/ALBUM.sha512sums.txt" && ! -f "$d/Ignore.sha512sums.txt" ]]; then
         shopt -s nullglob
         files=("$d"/*)
         shopt -u nullglob
@@ -998,7 +1022,7 @@ Every log file lives directly in that one directory and is named for the step th
 Additionally, Step 6 writes two specialized logs:
 
   5. step6-rogue-names.log
-    Lists any `.sha512*` files found that do not use the exact `ARTIST.sha512sums.txt` or `ALBUM.sha512sums.txt` naming convention.
+    Lists any `.sha512*` files found that do not use the accepted generic manifest names: `ARTIST.sha512sums.txt`, `ALBUM.sha512sums.txt`, or `Ignore.sha512sums.txt` (the self-contained manifest that 15d of the moOde cleanup guide writes inside each Ignore folder).
 
   6. step6-missing-manifests.log
     Lists directories that contain files but are missing both required manifest files.
