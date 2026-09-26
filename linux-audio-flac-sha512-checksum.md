@@ -1,6 +1,12 @@
 ### linux-audio-flac-sha512-checksum
 
-**Version: v15** — Current version; supersedes v14. Step 1 terminal
+**Version: v16** — Manifest convention change: `ALBUM.sha512sums.txt` now
+lists **AUDIO FILES ONLY** — cover art, `.mpdignore`, and other non-audio
+files are excluded, and the artist aggregate digest is likewise computed
+over audio files only, so artwork changes no longer invalidate manifests.
+Supersedes v15. (2026-09-26.)
+
+Previous v15 — Step 1 terminal
 output (header/footer) aligned to the moode-cleanup guide format,
 `.mpdignore` files excluded from the stray-file audit, the stray
 policy made explicit (list only — user decides what happens to strays),
@@ -280,7 +286,7 @@ cat "$LOG_ROOT/step1-fails.log"
 
 -- Purpose
 
-This step establishes the cryptographic fingerprint for individual files located inside nested Album folders. It creates the standard `ALBUM.sha512sums.txt` file.
+This step establishes the cryptographic fingerprint for the **audio files** inside nested Album folders. It creates the standard `ALBUM.sha512sums.txt` file, which lists AUDIO FILES ONLY — cover art, `.mpdignore`, and other non-audio files are deliberately excluded. (Convention change v16: manifests previously hashed every file in the folder including artwork.)
 
 -- Logging
 
@@ -357,12 +363,12 @@ for d in "${dirs[@]}"; do
     err=$(mktemp "$LOG_ROOT/step2-temp.XXXXXX")
     (
         cd "$d" || exit 1
-        shopt -s nullglob
-        files=(*)
-        shopt -u nullglob
+        shopt -s nullglob nocaseglob
+        files=( *.flac *.mp3 *.m4a *.mp4 *.ogg *.opus *.wav *.aiff *.aif *.aac *.alac *.ape *.wv *.spx *.dsf )
+        shopt -u nullglob nocaseglob
         target_files=()
         for f in "${files[@]}"; do
-            if [[ -f "$f" && "$f" != "ARTIST.sha512sums.txt" && "$f" != "ALBUM.sha512sums.txt" ]]; then
+            if [[ -f "$f" ]]; then
                 target_files+=("$f")
             fi
         done
@@ -532,7 +538,7 @@ cat "$LOG_ROOT/step3-errors.log"
 
 This step establishes the baseline cryptographic fingerprint for files located directly within the parent Artist directories. It creates the standard `ARTIST.sha512sums.txt` manifest.
 
-This step may be run from the Parent folder (processing every artist) or from within a single artist folder. It computes a single aggregate hash per album folder (excluding the `ALBUM.sha512sums.txt` file) and records it in the artist manifest.
+This step may be run from the Parent folder (processing every artist) or from within a single artist folder. It computes a single aggregate hash per album folder over that album's AUDIO FILES (artwork and non-audio files are not part of the digest) and records it in the artist manifest.
 
 -- Logging
 
@@ -597,7 +603,7 @@ generate_artist_checksums() {
         LC_ALL=C sort -z |
         while IFS= read -r -d '' album; do
             name=$(basename "$album")
-            hash=$(cd "$album" 2>/dev/null && find . -type f ! -name ALBUM.sha512sums.txt -print0 | LC_ALL=C sort -z | xargs -0 sha512sum | sha512sum | cut -d" " -f1)
+            hash=$(cd "$album" 2>/dev/null && find . -type f ! -name ALBUM.sha512sums.txt \( -iname "*.flac" -o -iname "*.mp3" -o -iname "*.m4a" -o -iname "*.mp4" -o -iname "*.ogg" -o -iname "*.opus" -o -iname "*.wav" -o -iname "*.aiff" -o -iname "*.aif" -o -iname "*.aac" -o -iname "*.alac" -o -iname "*.ape" -o -iname "*.wv" -o -iname "*.spx" -o -iname "*.dsf" \) -print0 | LC_ALL=C sort -z | xargs -0 sha512sum | sha512sum | cut -d" " -f1)
 
             if [ -n "$hash" ]; then
                 printf "%s  %s\n" "$hash" "$name" >> ARTIST.sha512sums.txt
@@ -768,6 +774,10 @@ verify_artist() {
             find . \
                 -type f \
                 ! -name "ALBUM.sha512sums.txt" \
+                \( -iname "*.flac" -o -iname "*.mp3" -o -iname "*.m4a" -o -iname "*.mp4" \
+                   -o -iname "*.ogg" -o -iname "*.opus" -o -iname "*.wav" -o -iname "*.aiff" \
+                   -o -iname "*.aif" -o -iname "*.aac" -o -iname "*.alac" -o -iname "*.ape" \
+                   -o -iname "*.wv" -o -iname "*.spx" -o -iname "*.dsf" \) \
                 -print0 |
             LC_ALL=C sort -z |
             xargs -0 sha512sum |

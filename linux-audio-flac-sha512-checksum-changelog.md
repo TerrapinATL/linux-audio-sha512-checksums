@@ -6,41 +6,8 @@ All version changes are appended to this file, newest last, one `## vX Change Lo
 
 **Suite convention (auto-purge):** every guide/repo with error logging must purge its log directory at the START of the workflow (first step), so the previous run's logs remain reviewable until the next run replaces them. This applies to all current and future repositories.
 
-**Current version: v15** — supersedes v14. Step 1 terminal output aligned
-to the moode-cleanup guide format. See the v15 entry below.
-
+**Current version: v16** — manifest convention change: audio files only. See the v16 entry below.
 Main guide: [linux-audio-flac-sha512-checksum.md](linux-audio-flac-sha512-checksum.md)
-
----
-
-## v1–v13 Change Logs (recovered summary)
-
-No per-version change log was recorded before v14. This summary was
-reconstructed (2026-09-26) from the archived guide copies in the local
-`Old/` archive (v1–v15) and the repository commit history. Approximate
-dates follow the commit record.
-
-* **v1** (Jul 2026) — initial two-tier SHA-512 system: an **ALBUM**
-  manifest hashing every audio file in a single album folder, and an
-  **ARTIST** manifest as a hash-of-hashes across all of an artist's
-  albums, so a single top-level check confirms an entire artist folder.
-  All sorting uses `LC_ALL=C sort -z` so manifest ordering is identical
-  across systems (Pi5, Win10 via WSL, laptop) and independent of locale.
-* **v2–v4** — guide and workflow refinements leading to the structured
-  guide format (numbered sections, requirements list).
-* **v5** — tiered manifest naming convention fixed as
-  `ARTIST.sha512sums.txt` / `ALBUM.sha512sums.txt`; optional
-  Zenity / Nemo action integration documented.
-* **v6–v7** — continued guide polish and script hardening.
-* **v8** (published to GitHub 2026-07-24, refined through Jul 30) —
-  restructured as "FLAC Library SHA-512 Checksum & Verification Guide";
-  this is the version the repository launched with.
-* **v8 → v13** (Jul 28 – Aug 28) — the main refinement period per the
-  commit history: script refactors for permissions and user-ownership
-  checks, error handling and logging improvements, checksum-mismatch
-  troubleshooting, and step-by-step review instructions.
-* **v14** (Aug 29) — the first version published WITH this change log;
-  per-version entries begin here. See the v14 entry below.
 
 ---
 
@@ -117,3 +84,21 @@ and earlier; those versions are archived locally only):
 * Also folded in: the minor documentation corrections that had been
   applied to the working copy after v14 was pushed (changelog link in
   the header, auto-purge comment in Step 1, standardized divider).
+
+## v16 Change Log (2026-09-26)
+
+* **Manifest convention change: audio files only.** `ALBUM.sha512sums.txt`
+  now hashes AUDIO FILES ONLY (flac, mp3, m4a, mp4, ogg, opus, wav, aiff,
+  aif, aac, alac, ape, wv, spx, dsf) — cover art, `.mpdignore`, and other
+  non-audio files are no longer hashed. The Step 4 artist aggregate digest
+  and the Step 5 artist verification recompute over the same audio-only
+  file set, so artwork changes no longer invalidate artist manifests.
+* Owner decision (2026-09-26): checksums protect the audio; artwork is
+  covered by the folder structure and is freely replaceable.
+* All three manifest tools in the suite (this guide, the Nemo Regenerate
+  actions, and the folder-recertification guide) are being updated to the
+  same rule; manifests generated under the old all-files convention must
+  be regenerated to match.
+* **Versioned copy** — the prior guide (v15) was archived as
+  `Old/linux-audio-flac-sha512-checksum-v15.md` before editing, per the
+  update rule.
