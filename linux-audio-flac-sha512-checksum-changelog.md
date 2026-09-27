@@ -6,7 +6,7 @@ All version changes are appended to this file, newest last, one `## vX Change Lo
 
 **Suite convention (auto-purge):** every guide/repo with error logging must purge its log directory at the START of the workflow (first step), so the previous run's logs remain reviewable until the next run replaces them. This applies to all current and future repositories.
 
-**Current version: v16** — manifest convention change: audio files only. See the v16 entry below.
+**Current version: v17** — artist digest covers everything in each album folder except ALBUM.sha512sums.txt. See the v17 entry below.
 Main guide: [linux-audio-flac-sha512-checksum.md](linux-audio-flac-sha512-checksum.md)
 
 ---
@@ -101,4 +101,60 @@ and earlier; those versions are archived locally only):
   be regenerated to match.
 * **Versioned copy** — the prior guide (v15) was archived as
   `Old/linux-audio-flac-sha512-checksum-v15.md` before editing, per the
+  update rule.
+
+## v17 Change Log (2026-09-27)
+
+* **Artist-digest convention change: everything, no exceptions.** Owner
+  decision (2026-09-27): `ARTIST.sha512sums.txt` covers **EVERYTHING in
+  each album folder except `ALBUM.sha512sums.txt` itself** — audio files
+  AND cover art, all files. Its purpose is proving an album folder's
+  contents are unchanged; the album tier (`ALBUM.sha512sums.txt`) remains
+  AUDIO FILES ONLY and focuses on the music itself. This supersedes the
+  v16 audio-only wording for the artist aggregate (the v16 ALBUM-manifest
+  audio-only rule is unchanged).
+* Guide edits: header version block, Step 4 prose and embedded script,
+  Step 5 embedded script — the audio-extension `find` filter was removed
+  from the artist hash and artist verify pipelines so they hash every
+  file except the album manifest.
+* Local tooling aligned the same day: `regen-artist-sha512` (audio-only
+  filter dropped), `verify-mastercopy` (HASH_PIPELINE now all-files; SMB
+  path retargeted to the server library mount), `verify-artist-sha512`
+  (already all-files; restored after a brief one-session edit). A real
+  artist folder was fully re-based under the convention: its legacy ALBUM
+  manifests were regenerated audio-only, every artist digest verified
+  album-by-album, and everything synced byte-identical to the server
+  library.
+* **Versioned copy** — the prior guide (v16) was archived as
+  `Old/linux-audio-flac-sha512-checksum-v16.md` before editing, per the
+  update rule.
+
+## v18 Change Log (2026-09-27)
+
+* **Artist-digest scope change: include the ALBUM manifest.** Owner
+  decision (2026-09-27): "no exceptions means NO EXCEPTIONS" — the artist
+  aggregate digest now covers **EVERYTHING in each album folder, including
+  `ALBUM.sha512sums.txt` itself** (audio files, cover art, and the album
+  manifest). Rationale: modifications or corruption of an ALBUM manifest
+  must be caught at the artist tier; excluding the manifest would leave
+  the per-file protection layer unguarded. Verified: a one-byte change to
+  an ALBUM manifest changes the artist digest. ALBUM manifests remain
+  AUDIO FILES ONLY (the album tier protects the music; the artist tier
+  proves contents unchanged, manifest included).
+* Guide edits: header version block, Step 4 prose and embedded script,
+  Step 5 embedded script — the `! -name ALBUM.sha512sums.txt` exclusion
+  was removed from the artist hash and artist verify pipelines.
+* Local tooling aligned the same day: `regen-artist-sha512`
+  (`album_hash` now walks all files), `verify-artist-sha512`, and
+  `verify-mastercopy` (HASH_PIPELINE now `find . -type f`). A real
+  artist folder's ARTIST digest was regenerated under the new rule,
+  verified album-by-album, and synced byte-identical to the server
+  library.
+* Workflow note: since ALBUM manifests are now part of the artist digest,
+  regenerating an ALBUM manifest always invalidates the parent
+  ARTIST.sha512sums.txt — regenerate the artist manifest after any album
+  manifest change (the regen-album tool's staleness reminder now applies
+  unconditionally).
+* **Versioned copy** — the prior guide (v17) was archived as
+  `Old/linux-audio-flac-sha512-checksum-v17.md` before editing, per the
   update rule.

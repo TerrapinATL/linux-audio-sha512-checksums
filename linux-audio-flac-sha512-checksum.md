@@ -1,6 +1,19 @@
 ### linux-audio-flac-sha512-checksum
 
-**Version: v16** — Manifest convention change: `ALBUM.sha512sums.txt` now
+**Version: v18** — Artist-digest scope change: the artist aggregate digest
+now covers **EVERYTHING in each album folder, INCLUDING
+`ALBUM.sha512sums.txt`** — audio files, cover art, and the album manifest
+itself, no exceptions. Rationale: a corrupted or tampered ALBUM manifest
+must be caught at the artist tier. ALBUM manifests remain AUDIO FILES
+ONLY. Supersedes v17. (2026-09-27.)
+
+Previous v17 — Artist-digest convention change: the artist aggregate
+digest covers **EVERYTHING in each album folder except
+`ALBUM.sha512sums.txt`** — audio files AND cover art. Its purpose is
+proving an album folder's contents are unchanged, not just its music.
+ALBUM manifests remain AUDIO FILES ONLY. Supersedes v16. (2026-09-27.)
+
+Previous v16 — Manifest convention change: `ALBUM.sha512sums.txt` now
 lists **AUDIO FILES ONLY** — cover art, `.mpdignore`, and other non-audio
 files are excluded, and the artist aggregate digest is likewise computed
 over audio files only, so artwork changes no longer invalidate manifests.
@@ -538,7 +551,7 @@ cat "$LOG_ROOT/step3-errors.log"
 
 This step establishes the baseline cryptographic fingerprint for files located directly within the parent Artist directories. It creates the standard `ARTIST.sha512sums.txt` manifest.
 
-This step may be run from the Parent folder (processing every artist) or from within a single artist folder. It computes a single aggregate hash per album folder over that album's AUDIO FILES (artwork and non-audio files are not part of the digest) and records it in the artist manifest.
+This step may be run from the Parent folder (processing every artist) or from within a single artist folder. It computes a single aggregate hash per album folder over that album's ENTIRE CONTENTS — EVERY file in the album folder, including `ALBUM.sha512sums.txt` itself: audio files, cover art, and the album manifest, no exceptions (v18: the artist tier must catch a corrupted or tampered ALBUM manifest, so the manifest is part of the digest). It records one hash line per album in the artist manifest.
 
 -- Logging
 
@@ -603,7 +616,7 @@ generate_artist_checksums() {
         LC_ALL=C sort -z |
         while IFS= read -r -d '' album; do
             name=$(basename "$album")
-            hash=$(cd "$album" 2>/dev/null && find . -type f ! -name ALBUM.sha512sums.txt \( -iname "*.flac" -o -iname "*.mp3" -o -iname "*.m4a" -o -iname "*.mp4" -o -iname "*.ogg" -o -iname "*.opus" -o -iname "*.wav" -o -iname "*.aiff" -o -iname "*.aif" -o -iname "*.aac" -o -iname "*.alac" -o -iname "*.ape" -o -iname "*.wv" -o -iname "*.spx" -o -iname "*.dsf" \) -print0 | LC_ALL=C sort -z | xargs -0 sha512sum | sha512sum | cut -d" " -f1)
+            hash=$(cd "$album" 2>/dev/null && find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha512sum | sha512sum | cut -d" " -f1)
 
             if [ -n "$hash" ]; then
                 printf "%s  %s\n" "$hash" "$name" >> ARTIST.sha512sums.txt
@@ -773,11 +786,6 @@ verify_artist() {
 
             find . \
                 -type f \
-                ! -name "ALBUM.sha512sums.txt" \
-                \( -iname "*.flac" -o -iname "*.mp3" -o -iname "*.m4a" -o -iname "*.mp4" \
-                   -o -iname "*.ogg" -o -iname "*.opus" -o -iname "*.wav" -o -iname "*.aiff" \
-                   -o -iname "*.aif" -o -iname "*.aac" -o -iname "*.alac" -o -iname "*.ape" \
-                   -o -iname "*.wv" -o -iname "*.spx" -o -iname "*.dsf" \) \
                 -print0 |
             LC_ALL=C sort -z |
             xargs -0 sha512sum |
